@@ -102,21 +102,44 @@ update := bson.M{
 		return 
 	}
 
-	// generate the jwt token after successfull verification
 
-	token,err:=utils.GenerateToken(user.ID.Hex(),user.Email,user.Role)
 
-	if err!=nil{
-		c.JSON(http.StatusInternalServerError,gin.H{"error":"Token generation failed"})
-		return 
-	}
 
-	// once done return the token and message 
+	// once done  send the phone number otp
+
+	// generate phone otp
+	
+phoneOtp := utils.GenerateOtp()
+phoneOtpHash, _ := utils.HashPassword(phoneOtp)
+
+// update user with phone otp
+update = bson.M{
+	"$set": bson.M{
+		"is_email_verified": true,
+		"otp_hash":          phoneOtpHash,
+		"otp_expiry":        time.Now().Add(5 * time.Minute),
+		"updated_at":        time.Now(),
+	},
+}
+
+// update db
+_, err = editorCollection.UpdateOne(
+	ctx,
+	bson.M{"_id": user.ID},
+	update,
+)
+if err != nil {
+	c.JSON(http.StatusInternalServerError, gin.H{"error": "Verification failed"})
+	return
+}
+
+go utils.SendSMSOTP(user.Phone, phoneOtp)
+
 
 
 	c.JSON(http.StatusOK,gin.H{
-		"message":"Account verified",
-		"token":token,
+		"message":"Email verified successfully. Phone OTP sent",
+		"user_id":user.ID.Hex(),
 	})
 
 

@@ -50,11 +50,11 @@ type User struct{
 	IsEmailVerified bool `bson:"is_email_verified" json:"is_email_verified"`
 	IsPhoneVerified bool `bson:"is_phone_verified" json:"is_phone_verified"`
 
-	//otp check
+	//otp check and method
 
 	OtpHash string `bson:"otp_hash,omitempty" json:"otp_hash"`
-	OtpExpiry *time.Time `bson:"otp_expiry,omitempty" json:"-"`
-
+	OtpExpiry time.Time `bson:"otp_expiry,omitempty" json:"-"`
+ OtpPurpose string `bson:"otp_purpose" json:"otp_purpose"`
 
 	//meta data for the user profile display
 

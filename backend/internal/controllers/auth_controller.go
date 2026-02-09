@@ -169,3 +169,5 @@ func RegisterUser(client *mongo.Client)gin.HandlerFunc{
 
 	}
 }
+
+

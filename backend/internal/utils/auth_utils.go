@@ -10,7 +10,7 @@ import (
 
 
 
-
+// helper for hashing the password
 
 func HashPassword(password string)(string,error){
 	bytes,err:=bcrypt.GenerateFromPassword([]byte (password),bcrypt.DefaultCost)
@@ -21,6 +21,8 @@ func HashPassword(password string)(string,error){
 	return string(bytes),nil
 }
 
+
+// helper for generating 4 digit otp
 func GenerateOtp()string{
 	max:=big.NewInt(10000)
 	n,err:=rand.Int(rand.Reader,max)

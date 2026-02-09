@@ -7,6 +7,7 @@ import (
 
 	"github.com/ayushmehta03/editorz-userRepo/backend/internal/database"
 	"github.com/ayushmehta03/editorz-userRepo/backend/internal/models"
+	"github.com/ayushmehta03/editorz-userRepo/backend/internal/utils"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -76,8 +77,20 @@ update := bson.M{
 		return 
 	}
 
+	token,err:=utils.GenerateToken(user.ID.Hex(),user.Email,user.Role)
 
-	
+	if err!=nil{
+		c.JSON(http.StatusInternalServerError,gin.H{"error":"Token generation failed"})
+		return 
+	}
+
+	c.JSON(http.StatusOK,gin.H{
+		"message":"Account verified",
+		"token":token,
+	})
+
+
+
 
 
 	}

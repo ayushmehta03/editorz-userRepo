@@ -14,8 +14,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/crypto/bcrypt"
 )
-
 
 // register user api
 func RegisterUser(client *mongo.Client)gin.HandlerFunc{
@@ -155,6 +155,9 @@ func RegisterUser(client *mongo.Client)gin.HandlerFunc{
 			return
 		}
 
+		if otpPurpose=="email"{
+
+		}
 
 
 
@@ -167,6 +170,71 @@ func RegisterUser(client *mongo.Client)gin.HandlerFunc{
 
 
 
+
+
+
+	}
+}
+
+// login via email or username + password
+
+func LoginWithPassword(client *mongo.Client)gin.HandlerFunc{
+	return func(c *gin.Context){
+
+		var req struct{
+			Identifier string `json:"identifier"`
+			Password string `json:"password"`
+		}
+
+		if err:=c.ShouldBindJSON(&req);err!=nil{
+			c.JSON(http.StatusBadRequest,gin.H{"error":"Invalid input"})
+			return 
+		}
+
+		ctx,cancel:=context.WithTimeout(context.Background(),10*time.Second)
+
+		defer cancel()
+
+
+		editorCollection:=database.OpenCollection("editors",client)
+
+		var user models.User
+
+		filter:=bson.M{
+			"$or":[]bson.M{
+				{"email":req.Identifier},
+				{"username":req.Identifier},
+			},
+		}
+
+		if err:=editorCollection.FindOne(ctx,filter).Decode(&user);err!=nil{
+			c.JSON(http.StatusNotFound,gin.H{"error":"No such user found"});
+			return 
+		}
+
+		if err:=bcrypt.CompareHashAndPassword(
+			[]byte(user.PasswordHash),
+			[]byte(req.Password),
+		);err!=nil{
+			c.JSON(http.StatusUnauthorized,gin.H{"error":"Invalid credentials"})
+			return 
+		}
+
+		if !user.IsEmailVerified || !user.IsPhoneVerified{
+			c.JSON(http.StatusForbidden,gin.H{"error":"Email or Phone Not verified"})
+			return 
+		}
+
+		token, err := utils.GenerateToken(user.ID.Hex(), user.Email, user.Role)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Token generation failed"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Login successful",
+			"token":   token,
+		})
 
 	}
 }

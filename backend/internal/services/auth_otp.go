@@ -17,137 +17,85 @@ import (
 
 // verify email otp given by user with the otp we generated during registration
 
-func VerifyOtpEmail(client *mongo.Client)gin.HandlerFunc{
+// verify email otp and auto-send phone otp
+func VerifyOtpEmail(client *mongo.Client) gin.HandlerFunc {
+	return func(c *gin.Context) {
 
-	return func(c*gin.Context){
+		var req struct {
+			Email string `json:"email"`
+			OTP   string `json:"otp"`
+		}
 
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid email or otp"})
+			return
+		}
 
-		// required fields email and otp
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
 
-	var req struct{
-		Email string `json:"email"`
-		OTP string `json:"otp"`
+		editorCollection := database.OpenCollection("editors", client)
 
-	}
+		var user models.User
 
+		if err := editorCollection.FindOne(ctx, bson.M{
+			"email": req.Email,
+		}).Decode(&user); err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			return
+		}
 
-	// take the value from frontend inside the req struct
+		if user.IsEmailVerified {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Email already verified"})
+			return
+		}
 
-	if err:=c.ShouldBindJSON(&req);err!=nil{
-		c.JSON(http.StatusBadRequest,gin.H{"error":"Invalid email or otp"})
-		return 
-	}
+		if time.Now().After(user.OtpExpiry) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "OTP expired"})
+			return
+		}
 
-	// context time out 
-	ctx,cancel:=context.WithTimeout(context.Background(),10*time.Second)
-	defer cancel()
+		if err := bcrypt.CompareHashAndPassword(
+			[]byte(user.OtpHash),
+			[]byte(req.OTP),
+		); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid otp"})
+			return
+		}
 
+		// generate PHONE otp
+		phoneOtp := utils.GenerateOtp()
+		phoneOtpHash, _ := utils.HashPassword(phoneOtp)
 
-	// connect to the collection in database
+		// single atomic update
+		update := bson.M{
+			"$set": bson.M{
+				"is_email_verified": true,
+				"otp_hash":          phoneOtpHash,
+				"otp_expiry":        time.Now().Add(5 * time.Minute),
+				"updated_at":        time.Now(),
+			},
+		}
 
-	editorCollection:=database.OpenCollection("editors",client)
-		
+		if _, err := editorCollection.UpdateOne(
+			ctx,
+			bson.M{"_id": user.ID},
+			update,
+		); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Verification failed"})
+			return
+		}
 
-	// user model copying for getting details from db search
-	var user models.User
+		// send PHONE otp
+		go utils.SendSMSOTP(user.Phone, phoneOtp)
 
-
-	// search in the editor collection with refrence to the email
-
-	if err:=editorCollection.FindOne(ctx,bson.M{"email":req.Email}).Decode(&user);err!=nil{
-		c.JSON(http.StatusNotFound,gin.H{"error":"User not found"})
-		return 
-	}
-
-	// if user email is alreadfy verified no need to go ahead 
-
-	if user.IsEmailVerified{
-		c.JSON(http.StatusBadRequest,gin.H{"error":"User alredy verified with email"})
-		return 
-	}
-
-
-	// if otp is expired wrt time stop execution
-
-	if time.Now().After(user.OtpExpiry){
-		c.JSON(http.StatusBadRequest,gin.H{"error":"Otp has expired"})
-		return 
-	}
-
-	// comparing the saved hashed otp with the given otp
-
-	if err:=bcrypt.CompareHashAndPassword([]byte(user.OtpHash),[]byte(req.OTP));err!=nil{
-		c.JSON(http.StatusBadRequest,gin.H{"error":"Invalid otp"})
-		return 
-	}
-
-
-	// update the data inside the database after verification with this update query
-
-update := bson.M{
-	"$set": bson.M{
-		"is_email_verified": true,
-		"updated_at":  time.Now(),
-	},
-	"$unset": bson.M{
-		"otp_hash":   "",
-		"otp_expiry": "",
-	},
-}
-
-	_,err:=editorCollection.UpdateOne(ctx,bson.M{"email":req.Email},update)
-
-	if err!=nil{
-		c.JSON(http.StatusInternalServerError,gin.H{"error":"Verification failed"})
-		return 
-	}
-
-
-
-
-	// once done  send the phone number otp
-
-	// generate phone otp
-	
-phoneOtp := utils.GenerateOtp()
-phoneOtpHash, _ := utils.HashPassword(phoneOtp)
-
-// update user with phone otp
-update = bson.M{
-	"$set": bson.M{
-		"is_email_verified": true,
-		"otp_hash":          phoneOtpHash,
-		"otp_expiry":        time.Now().Add(5 * time.Minute),
-		"updated_at":        time.Now(),
-	},
-}
-
-// update db
-_, err = editorCollection.UpdateOne(
-	ctx,
-	bson.M{"_id": user.ID},
-	update,
-)
-if err != nil {
-	c.JSON(http.StatusInternalServerError, gin.H{"error": "Verification failed"})
-	return
-}
-
-go utils.SendSMSOTP(user.Phone, phoneOtp)
-
-
-
-	c.JSON(http.StatusOK,gin.H{
-		"message":"Email verified successfully. Phone OTP sent",
-		"user_id":user.ID.Hex(),
-	})
-
-
-
-
-
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Email verified successfully. Phone OTP sent.",
+			"user_id": user.ID.Hex(),
+		})
 	}
 }
+
 
 
 func VerifyPhoneOTP(client *mongo.Client)gin.HandlerFunc{

@@ -140,6 +140,7 @@ func RegisterUser(client *mongo.Client)gin.HandlerFunc{
 	user.ShowOnHiringPage=false
 	user.EmploymentStatus="Not mentioned"
 	user.OtpPurpose=otpPurpose
+	user.Role="editor"
 	user.CreatedAt=time.Now()
 	user.UpdatedAt=time.Now()
 

@@ -115,18 +115,10 @@ func RegisterUser(client *mongo.Client)gin.HandlerFunc{
 
 
 
-	// otp purpose must be clear wether user want email veirifaction or mobile no veriifaction
+	// otp purpose will start with email and then verify phone
 
 	otpPurpose:="email"
 
-	// if the email is not empty send otp to email
-	if user.Email!=""{
-		otpPurpose="email"
-
-		// if phone is not empty use phone number 
-	}else if user.Phone!=""{
-		otpPurpose="phone"
-	}
 
 	// putting up all the required values for insertion in the document 
 

@@ -15,8 +15,8 @@ type User struct{
 	// identity of the user
 
 	UserName string `bson:"username" json:"username" validate:"required,min=5,max=20"`
-	Email string `bson:"email,omitempty" json:"email,omitempty" validate:"omitempty,email"`
-	Phone string `bson:"phone,omitempty" json:"phone,omitempty"`
+	Email string `bson:"email" json:"email" validate:"required,email"`
+	Phone string `bson:"phone" json:"phone" validate:"required"`
 
 
 	PasswordHash string `bson:"password_hash" json:"password_hash"`

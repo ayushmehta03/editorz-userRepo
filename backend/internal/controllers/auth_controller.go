@@ -16,15 +16,29 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+
+// register user api
 func RegisterUser(client *mongo.Client)gin.HandlerFunc{
+
+
 	return func(c* gin.Context){
 
+
+
+
+		// copy the exact struct to take user input for editors info 
+
 		var user models.User
+
+
+		// should bind json -> it fills the data in the strcut coming from frontend response on the baisis of json tags
 
 		if err:=c.ShouldBindJSON(&user);err!=nil{
 			c.JSON(http.StatusBadRequest,gin.H{"error":"Invalid input data"})
 			return 
 		}
+
+		// added the validator to veirfy the input for the struct coming from frontend
 
 		validate:=validator.New()
 		if err:=validate.Struct(user);err!=nil{
@@ -35,6 +49,8 @@ func RegisterUser(client *mongo.Client)gin.HandlerFunc{
 			return
 		}
 
+		// hashing password 
+
 		hashedPassword,err:=utils.HashPassword(user.PasswordHash)
 
 		if err!=nil{
@@ -42,13 +58,17 @@ func RegisterUser(client *mongo.Client)gin.HandlerFunc{
 			return 
 		}
 
+
+		// setting context time of 10 seconds 
 		ctx,cancel:=context.WithTimeout(context.Background(),10*time.Second)
 
 		defer cancel();
 
+		// accessing the editor collection inside the database 
 
 		editorCollection:=database.OpenCollection("editors",client)
 
+		// we will cehck the old user with two params username and email both must be unique 
 
 		filter := bson.M{
 	"$or": []bson.M{
@@ -58,16 +78,22 @@ func RegisterUser(client *mongo.Client)gin.HandlerFunc{
 }
 
 
+	// count document will return if there is any exitsing user earlier 
 	count,err:=editorCollection.CountDocuments(ctx,filter)
 	if err!=nil{
 		c.JSON(http.StatusInternalServerError,gin.H{"error":"Failed to check existing user"})
 		return 
 	}
 
+	// if count is greater than 0 we will return conflict and close the program
+
 	if count>0{
 		c.JSON(http.StatusConflict,gin.H{"error":"User already exits"})
 		return 
 	}
+
+
+	// required for default profile picture api on the basis of username it will generate random avtar for profile pic later on usercan update it
 
 	seed:=user.UserName
 	if seed==" "{
@@ -81,21 +107,28 @@ func RegisterUser(client *mongo.Client)gin.HandlerFunc{
 
 
 
+	// generating the otp and hashing it for verification purpose 
+
 	otp:=utils.GenerateOtp();
 
 	otpHash,_:=utils.HashPassword(otp)
 
 
 
+	// otp purpose must be clear wether user want email veirifaction or mobile no veriifaction
 
 	otpPurpose:="email"
 
-
+	// if the email is not empty send otp to email
 	if user.Email!=""{
 		otpPurpose="email"
+
+		// if phone is not empty use phone number 
 	}else if user.Phone!=""{
 		otpPurpose="phone"
 	}
+
+	// putting up all the required values for insertion in the document 
 
 
 	user.PasswordHash=hashedPassword
@@ -109,8 +142,13 @@ func RegisterUser(client *mongo.Client)gin.HandlerFunc{
 	user.OtpPurpose=otpPurpose
 	user.CreatedAt=time.Now()
 	user.UpdatedAt=time.Now()
+
+	// 10 minutes timer for otp expiry
+
 	user.OtpExpiry= time.Now().Add(10 * time.Minute)
 
+
+	// inserting the document into the user collection
 	if _, err := editorCollection.InsertOne(ctx, user); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register user"})
 			return
@@ -119,9 +157,7 @@ func RegisterUser(client *mongo.Client)gin.HandlerFunc{
 
 
 
-if otpPurpose=="email"{
-	go 
-}
+
 
 
 

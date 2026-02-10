@@ -68,3 +68,41 @@ func MessageCentralSendOTP(mobile string) (string, error) {
 
 	return response.Data.VerificationID, nil
 }
+
+
+func MessageCentralVerifyOTP(verificationId, otp string) error {
+
+	authToken := os.Getenv("MESSAGE_CENTRAL_AUTH_TOKEN")
+	if authToken == "" {
+		return errors.New("message central auth token not set")
+	}
+
+	url := fmt.Sprintf(
+		"https://cpaas.messagecentral.com/verification/v3/validateOtp?verificationId=%s&code=%s&flowType=SMS",
+		verificationId,
+		otp,
+	)
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("authToken", authToken)
+	req.Header.Set("accept", "application/json")
+
+	resp, err := mcClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("otp validation failed: %s", string(body))
+	}
+
+	return nil
+}
+

@@ -54,7 +54,6 @@ type User struct{
 
 	OtpHash string `bson:"otp_hash,omitempty" json:"otp_hash"`
 	OtpExpiry time.Time `bson:"otp_expiry,omitempty" json:"-"`
- OtpPurpose string `bson:"otp_purpose" json:"otp_purpose"`
 
 // api req for mobile otp
 

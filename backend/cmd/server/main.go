@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/ayushmehta03/editorz-userRepo/backend/internal/database"
+	"github.com/ayushmehta03/editorz-userRepo/backend/internal/routes"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -43,6 +44,12 @@ func main(){
 			log.Printf("Mongo disconnect error: %v",err)
 		}
 	}()
+
+	// auth routes
+
+	routes.AuthRoutes(router,client)
+
+	
 
 
 	port:=os.Getenv("PORT")

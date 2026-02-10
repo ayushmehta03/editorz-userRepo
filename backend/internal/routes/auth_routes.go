@@ -1,0 +1,19 @@
+package routes
+
+import (
+	"github.com/ayushmehta03/editorz-userRepo/backend/internal/controllers"
+	"github.com/ayushmehta03/editorz-userRepo/backend/internal/services"
+	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/mongo"
+)
+
+func AuthRoutes(router *gin.Engine,client*mongo.Client){
+
+	auth:=router.Group("/api/auth")
+
+	auth.POST("/register",controllers.RegisterUser(client))
+	auth.POST("verify-email",services.VerifyOtpEmail(client))
+	auth.POST("/verify-phone",services.VerifyPhoneOTP(client))
+	auth.POST("/login",controllers.LoginWithPassword(client))
+	
+}

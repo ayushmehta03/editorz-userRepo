@@ -178,8 +178,15 @@ func VerifyPhoneOTP(client *mongo.Client) gin.HandlerFunc {
 			return
 		}
 
+		token,err:=utils.GenerateToken(user.ID.Hex(),user.Email,user.Role)
+		if err!=nil{
+			c.JSON(http.StatusInternalServerError,gin.H{"error":"Token generation failed"})
+			return 
+		}
+
 		c.JSON(http.StatusOK, gin.H{
 			"message": "Phone number verified successfully. You can now log in.",
+			"token": token,
 		})
 	}
 }

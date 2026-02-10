@@ -96,7 +96,7 @@ func RegisterUser(client *mongo.Client) gin.HandlerFunc {
 		}
 
 		// send EMAIL otp (plain otp, async)
-		go utils.SendEmailOtp(user.Email, otp)
+		go utils.SendOTPEmail(user.Email, otp)
 
 		c.JSON(http.StatusCreated, gin.H{
 			"message": "Account registered successfully. Please verify your email.",

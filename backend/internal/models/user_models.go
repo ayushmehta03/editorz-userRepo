@@ -56,7 +56,14 @@ type User struct{
 	OtpExpiry time.Time `bson:"otp_expiry,omitempty" json:"-"`
  OtpPurpose string `bson:"otp_purpose" json:"otp_purpose"`
 
+// api req for mobile otp
+
+ VerificationID string `bson:"verification_id,omitempty"`
+
 	//meta data for the user profile display
+
+
+
 
 	ProfileImage string `bson:"profile_image,omitempty" json:"profile_image,omitempty"`
 	Skills []string `bson:"skills,omitempty" json:"skills,omitempty"`

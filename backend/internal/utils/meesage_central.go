@@ -14,6 +14,8 @@ var mcClient = &http.Client{
 	Timeout: 10 * time.Second,
 }
 
+// message central otp service for phone verification
+
 
 func MessageCentralSendOTP(mobile string) (string, error) {
 

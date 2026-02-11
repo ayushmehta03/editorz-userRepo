@@ -21,6 +21,6 @@ func AuthRoutes(router *gin.Engine,client*mongo.Client, redis *redis.Client){
 	auth.POST("/login",controllers.LoginWithPassword(client))
 	auth.POST("/resend-email-otp",controllers.ResendEmailOtp(client,redis))
 	auth.POST("/resend-phone-otp",controllers.ResendPhoneOtp(client,redis))
-	
+	auth.POST("/logout",controllers.Logout())
 	
 }

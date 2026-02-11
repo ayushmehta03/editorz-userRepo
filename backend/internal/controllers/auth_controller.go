@@ -179,4 +179,12 @@ func LoginWithPassword(client *mongo.Client)gin.HandlerFunc{
 	}
 }
 
+func Logout() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        c.JSON(http.StatusOK, gin.H{
+            "message": "User logged out. Clear your local storage.",
+        })
+    }
+}
+
 

@@ -10,6 +10,7 @@ import (
 	"github.com/ayushmehta03/editorz-userRepo/backend/internal/routes"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
 )
 
 func main(){
@@ -45,9 +46,17 @@ func main(){
 		}
 	}()
 
+
+
+
+	// reidis client init
+	rdb:=redis.NewClient(&redis.Options{
+		Addr:"localhost:6379",
+	})
+
 	// auth routes
 
-	routes.AuthRoutes(router,client)
+	routes.AuthRoutes(router,client,rdb)
 
 	
 

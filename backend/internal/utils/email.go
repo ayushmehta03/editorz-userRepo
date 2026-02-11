@@ -8,6 +8,9 @@ import (
     "os"
 )
 
+// helper function to send OTP email using Resend API
+
+
 func SendOTPEmail(toEmail string, otp string) error {
 
     apiKey := os.Getenv("RESEND_API_KEY")

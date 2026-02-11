@@ -71,6 +71,8 @@ func MessageCentralSendOTP(mobile string) (string, error) {
 	return response.Data.VerificationID, nil
 }
 
+// message central otp verification for phone verification
+
 
 func MessageCentralVerifyOTP(verificationId, otp string) error {
 

@@ -7,6 +7,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// define all the auth related routes here and link the controller and service functions with the routes
+
+
 func AuthRoutes(router *gin.Engine,client*mongo.Client){
 
 	auth:=router.Group("/api/auth")

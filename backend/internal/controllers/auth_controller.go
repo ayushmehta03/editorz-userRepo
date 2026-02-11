@@ -76,7 +76,7 @@ func RegisterUser(client *mongo.Client) gin.HandlerFunc {
 			url.QueryEscape(seed),
 		)
 
-		// generate EMAIL otp
+		// generate OTP for phone email verification and hash it before saving to database, set expiry time for otp as 10 minutes from now
 		otp := utils.GenerateOtp()
 		otpHash, _ := utils.HashPassword(otp)
 
@@ -107,12 +107,17 @@ func RegisterUser(client *mongo.Client) gin.HandlerFunc {
 // login via email or username + password
 
 func LoginWithPassword(client *mongo.Client)gin.HandlerFunc{
+
+	// request body struct for identifier and password
+	
 	return func(c *gin.Context){
 
 		var req struct{
 			Identifier string `json:"identifier"`
 			Password string `json:"password"`
 		}
+
+		//	 bind the json request body to the above struct and validate
 
 		if err:=c.ShouldBindJSON(&req);err!=nil{
 			c.JSON(http.StatusBadRequest,gin.H{"error":"Invalid input"})
@@ -123,6 +128,7 @@ func LoginWithPassword(client *mongo.Client)gin.HandlerFunc{
 
 		defer cancel()
 
+		// open the editors collection and find the user with the given email or username in request body
 
 		editorCollection:=database.OpenCollection("editors",client)
 
@@ -140,6 +146,8 @@ func LoginWithPassword(client *mongo.Client)gin.HandlerFunc{
 			return 
 		}
 
+		// compare the password given in request body with the hashed password stored in database for that user
+
 		if err:=bcrypt.CompareHashAndPassword(
 			[]byte(user.PasswordHash),
 			[]byte(req.Password),
@@ -147,6 +155,8 @@ func LoginWithPassword(client *mongo.Client)gin.HandlerFunc{
 			c.JSON(http.StatusUnauthorized,gin.H{"error":"Invalid credentials"})
 			return 
 		}
+
+		// check if email and phone both are verified for the user, if not then return error response
 
 		if !user.IsEmailVerified || !user.IsPhoneVerified{
 			c.JSON(http.StatusForbidden,gin.H{"error":"Email or Phone Not verified"})
@@ -158,6 +168,8 @@ func LoginWithPassword(client *mongo.Client)gin.HandlerFunc{
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Token generation failed"})
 			return
 		}
+
+		// return success response with the token
 
 		c.JSON(http.StatusOK, gin.H{
 			"message": "Login successful",

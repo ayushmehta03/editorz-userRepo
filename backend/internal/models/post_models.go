@@ -18,6 +18,7 @@ type Post struct {
 	User        PostUser           `bson:"user" json:"user"`
 	Caption     string             `bson:"caption" json:"caption"`
 	ImageURL    string             `bson:"image_url" json:"image_url"`
+	Published    bool                   `bson:"published" json:"published"`
 	Suggestions []Suggestion       `bson:"suggestions" json:"suggestions"`
 	CreatedAt   time.Time          `bson:"created_at" json:"created_at"`
 	UpdatedAt   time.Time          `bson:"updated_at" json:"updated_at"`
@@ -29,3 +30,4 @@ type Suggestion struct {
 	Text      string            `bson:"text" json:"text"`
 	CreatedAt time.Time         `bson:"created_at" json:"created_at"`
 }
+

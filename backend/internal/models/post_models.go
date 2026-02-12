@@ -15,7 +15,10 @@ type PostUser struct {
 
 type Post struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	Title       string               `bson:"title" json:"title"`
 	User        PostUser           `bson:"user" json:"user"`
+	AuthorID primitive.ObjectID `bson:"author_id" json:"author_id"`
+	Slug         string                  `bson:"slug" json:"slug"`
 	Caption     string             `bson:"caption" json:"caption"`
 	ImageURL    string             `bson:"image_url" json:"image_url"`
 	Published    bool                   `bson:"published" json:"published"`

@@ -13,7 +13,7 @@ type User struct{
 
 
 	// identity of the user
-
+	FullName string  `bson:"name" json:"name" validate:"required,min=1,max=30"`
 	UserName string `bson:"username" json:"username" validate:"required,min=5,max=20"`
 	Email string `bson:"email" json:"email" validate:"required,email"`
 	Phone string `bson:"phone" json:"phone" validate:"required"`
